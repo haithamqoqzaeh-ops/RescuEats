@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>RescuEats — Smart Food Redistribution</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Fraunces:wght@700;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#1a7a4a;--green-lt:#e8f5ee;--green-mid:#2ea05f;
+  --red:#d64545;--red-lt:#fdf0f0;--amber:#c97d0a;--amber-lt:#fef9ec;
+  --blue:#1e5799;--blue-lt:#edf3fc;
+  --gray-50:#f8f9fa;--gray-100:#f0f2f5;--gray-200:#e4e7ed;
+  --gray-400:#9ba3af;--gray-600:#6b7280;--gray-800:#1f2937;--white:#ffffff;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);
+  --radius:12px;--radius-sm:8px;
+  --font-body:'DM Sans',sans-serif;--font-head:'Fraunces',serif;
+}
+body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-800);font-size:14px}
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;min-height:100vh;background:var(--white);border-right:1px solid var(--gray-200);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:100}
+.main{margin-left:220px;flex:1;min-height:100vh}
+
+
+.sidebar-logo{padding:20px 16px 5px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.sidebar-logo-text{font-family:var(--font-head);font-size:20px;font-weight:900;color:var(--green);}
+.sidebar-logo-text span{color:var(--red);}
+
+.sidebar-role{margin:0 10px 14px;padding:7px 10px;background:var(--gray-100);border-radius:var(--radius-sm);font-size:11px;color:var(--gray-600);font-weight:600;text-align:center;}
+.sidebar-nav{flex:1;padding:0 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:500;color:var(--gray-600);transition:.15s;margin-bottom:2px;border:none;background:transparent;width:100%;text-align:left;font-family:var(--font-body)}
+.nav-item:hover{background:var(--gray-50);color:var(--green)}
+.nav-item.active{background:var(--green);color:var(--white)}
+.sidebar-footer{padding:14px;border-top:1px solid var(--gray-100)}
+.logout-btn{display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px;border-radius:var(--radius-sm);background:transparent;border:none;color:var(--gray-600);font-size:13px;font-family:var(--font-body);transition:.15s;width:100%}
+.logout-btn:hover{color:#f87171;background:rgba(248,113,113,.1)}
+.topbar{height:60px;background:var(--white);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow-sm)}
+.topbar-title{font-family:var(--font-head);font-size:18px;font-weight:700}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--white);cursor:pointer;transition:.15s}
+.avatar:hover{transform:scale(1.05)}
+.page{padding:24px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);border:1px solid var(--gray-200)}
+.stat-icon{font-size:24px;margin-bottom:8px}
+.stat-val{font-family:var(--font-head);font-size:24px;font-weight:900}
+.stat-label{font-size:12px;color:var(--gray-600);margin-top:2px}
+.stat-delta{font-size:11px;font-weight:600;margin-top:5px;color:var(--green-mid)}
+.card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);margin-bottom:18px}
+.card-title{font-family:var(--font-head);font-size:15px;font-weight:700;margin-bottom:14px}
+.card-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-body);transition:.15s}
+.btn-primary{background:var(--green);color:var(--white)}
+.btn-primary:hover{background:var(--green-mid);transform:translateY(-1px)}
+.btn-secondary{background:var(--gray-100);color:var(--gray-800);border:1px solid var(--gray-200)}
+.btn-secondary:hover{background:var(--gray-200)}
+.btn-danger{background:var(--red-lt);color:var(--red);border:1px solid #fecaca}
+.btn-sm{padding:5px 10px;font-size:12px}
+.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:100px;font-size:11px;font-weight:600}
+.tag-green{background:var(--green-lt);color:var(--green)}
+.tag-red{background:var(--red-lt);color:var(--red)}
+.tag-amber{background:var(--amber-lt);color:var(--amber)}
+.tag-blue{background:var(--blue-lt);color:var(--blue)}
+.tag-gray{background:var(--gray-100);color:var(--gray-600)}
+.table{width:100%;border-collapse:collapse}
+.table th{text-align:left;padding:9px 12px;font-size:11px;font-weight:600;color:var(--gray-600);background:var(--gray-50);border-bottom:1px solid var(--gray-200);text-transform:uppercase;letter-spacing:.5px}
+.table td{padding:11px 12px;font-size:13px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
+.table tr:last-child td{border-bottom:none}
+.table tr:hover td{background:var(--gray-50)}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px}
+.form-input,.form-select{width:100%;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;font-family:var(--font-body);color:var(--gray-800);background:var(--white);transition:.15s;outline:none}
+.form-input:focus,.form-select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(26,122,74,.1)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f2417 0%,#1a7a4a 60%,#2ea05f 100%)}
+.login-box{background:var(--white);border-radius:20px;padding:36px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+
+
+.login-logo-container{display:flex;flex-direction:column;align-items:center;margin-bottom:20px;}
+.login-logo-text{font-family:var(--font-head);font-size:32px;font-weight:900;color:var(--green);margin-top:5px;}
+.login-logo-text span{color:var(--red);}
+
+.login-tabs{display:flex;gap:4px;background:var(--gray-100);border-radius:var(--radius-sm);padding:4px;margin-bottom:20px}
+.login-tab{flex:1;padding:7px;text-align:center;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--gray-600);transition:.15s;border:none;background:transparent;font-family:var(--font-body)}
+.login-tab.active{background:var(--white);color:var(--green);box-shadow:var(--shadow-sm)}
+.role-btn{padding:9px;border-radius:var(--radius-sm);border:2px solid var(--gray-200);background:var(--white);cursor:pointer;font-family:var(--font-body);font-weight:600;font-size:12px;color:var(--gray-600);transition:.15s;width:100%}
+.role-btn.selected{border-color:var(--green);background:var(--green-lt);color:var(--green)}
+.alert{padding:11px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:14px;border-left:4px solid}
+.alert-green{background:var(--green-lt);color:var(--green);border-color:var(--green)}
+.alert-amber{background:var(--amber-lt);color:var(--amber);border-color:var(--amber)}
+.map-box{background:linear-gradient(135deg,#e8f5ee,#d1fae5);border-radius:var(--radius);height:220px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;border:2px dashed var(--green-mid);color:var(--green);font-weight:600;margin-bottom:18px}
+.food-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.food-card{border:1.5px solid var(--gray-200);border-radius:var(--radius);padding:14px;transition:.15s;background:var(--white)}
+.food-card:hover{border-color:var(--green);box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.task-card{border:1.5px solid var(--gray-200);border-radius:var(--radius);padding:16px;background:var(--white);transition:.15s;margin-bottom:10px}
+.task-card:hover{border-color:var(--green-mid);box-shadow:var(--shadow-md)}
+.progress{height:7px;background:var(--gray-200);border-radius:100px;overflow:hidden;margin-top:6px}
+.progress-bar{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--green),var(--green-mid))}
+.rank{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--gray-100)}
+.rank:last-child{border-bottom:none}
+.rank-num{font-family:var(--font-head);font-size:17px;font-weight:900;color:var(--gray-400);width:26px}
+.gold{color:#f59e0b}.silver{color:#94a3b8}.bronze{color:#d97706}
+.hidden{display:none!important}
+
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.recycle-arrows { animation: spin 15s linear infinite; transform-origin: 60px 60px; }
+</style>
+</head>
+<body>
+
+<div id="login-page" class="login-page">
+  <div class="login-box">
+    
+   
+    <div class="login-logo-container">
+      <svg viewBox="0 0 120 120" style="width: 130px; height: 130px;">
+       
+        <g fill="#9ca3af">
+            <!-- Fork -->
+            <path d="M 22 30 V 45 Q 22 52 26 52 V 85 H 29 V 52 Q 33 52 33 45 V 30 H 31 V 43 H 29 V 30 H 26 V 43 H 24 V 30 Z"/>
+            <!-- Knife -->
+            <path d="M 98 30 C 102 30 102 45 102 50 H 98 V 85 H 95 V 30 Z"/>
+        </g>
+
+      
+        <g class="recycle-arrows" stroke="#1a7a4a" stroke-width="3" fill="none">
+            <path d="M 60 15 A 45 45 0 0 1 98 38"/>
+            <polygon points="98,38 90,32 98,25" fill="#1a7a4a" stroke="none"/>
+            
+            <path d="M 98 82 A 45 45 0 0 1 22 82"/>
+            <polygon points="22,82 30,88 22,95" fill="#1a7a4a" stroke="none"/>
+            
+            <path d="M 22 38 A 45 45 0 0 1 55 15"/>
+            <polygon points="55,15 47,10 49,20" fill="#1a7a4a" stroke="none"/>
+        </g>
+
+     
+        <circle cx="60" cy="60" r="30" fill="#ffffff" stroke="#e4e7ed" stroke-width="2"/>
+        <circle cx="60" cy="60" r="22" fill="#4ade80"/> 
+        <circle cx="53" cy="63" r="6" fill="#ef4444"/>
+        <ellipse cx="68" cy="55" rx="7" ry="5" fill="#f59e0b" transform="rotate(-20 68 55)"/> <!-- طعام برتقالي -->
+        <circle cx="55" cy="52" r="4" fill="#fcd34d"/> 
+      </svg>
+      <div class="login-logo-text">Rescue<span>Eats</span></div>
+    </div>
+
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchTab('signin')">Sign In</button>
+      <button class="login-tab" onclick="switchTab('register')">Register</button>
+    </div>
+    <div id="reg-extra" class="hidden">
+      <div class="form-label" style="margin-bottom:8px">I am a...</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <button class="role-btn selected" onclick="selRole(this,'donor')">🍽️ Donor</button>
+        <button class="role-btn" onclick="selRole(this,'recipient')">🏠 Recipient</button>
+        <button class="role-btn" onclick="selRole(this,'driver')">🚗 Driver</button>
+        <button class="role-btn" onclick="selRole(this,'admin')">🛡️ Admin</button>
+      </div>
+      <div class="form-group"><label class="form-label">Organisation / Full Name</label>
+        <input class="form-input" placeholder="e.g. Royal Hotel Amman"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Email Address</label>
+      <input class="form-input" type="email" placeholder="you@example.com"/></div>
+    <div class="form-group"><label class="form-label">Password</label>
+      <input class="form-input" type="password" placeholder="••••••••"/></div>
+    <div id="forgot" style="text-align:right;margin-bottom:16px">
+      <span style="font-size:12px;color:var(--green);cursor:pointer;font-weight:600" onclick="alert('A password reset link has been sent to your email!')">Forgot password?</span></div>
+    <button class="btn btn-primary" id="main-btn" style="width:100%;justify-content:center;padding:12px" onclick="doLogin()">Sign In →</button>
+    <div id="signin-ex">
+      <div style="display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--gray-400);font-size:12px">
+        <div style="flex:1;height:1px;background:var(--gray-200)"></div>or<div style="flex:1;height:1px;background:var(--gray-200)"></div></div>
+      <button class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:12px" onclick="alert('Redirecting to Google Authentication...')">🔵 Continue with Google</button>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:4px">
+        <button class="btn btn-secondary btn-sm" style="justify-content:center;font-size:11px" onclick="loginAs('donor')">🍽️ Donor</button>
+        <button class="btn btn-secondary btn-sm" style="justify-content:center;font-size:11px" onclick="loginAs('recipient')">🏠 Recipient</button>
+        <button class="btn btn-secondary btn-sm" style="justify-content:center;font-size:11px" onclick="loginAs('driver')">🚗 Driver</button>
+        <button class="btn btn-secondary btn-sm" style="justify-content:center;font-size:11px" onclick="loginAs('admin')">🛡️ Admin</button>
+      </div>
+      <div style="text-align:center;font-size:10px;color:var(--gray-400)">Quick demo login</div>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <div class="sidebar">
+    
+    
+    <div class="sidebar-logo">
+      <svg viewBox="0 0 120 120" style="width: 70px; height: 70px;">
+        <g fill="#9ca3af">
+            <path d="M 22 30 V 45 Q 22 52 26 52 V 85 H 29 V 52 Q 33 52 33 45 V 30 H 31 V 43 H 29 V 30 H 26 V 43 H 24 V 30 Z"/>
+            <path d="M 98 30 C 102 30 102 45 102 50 H 98 V 85 H 95 V 30 Z"/>
+        </g>
+        <g class="recycle-arrows" stroke="#1a7a4a" stroke-width="3" fill="none">
+            <path d="M 60 15 A 45 45 0 0 1 98 38"/>
+            <polygon points="98,38 90,32 98,25" fill="#1a7a4a" stroke="none"/>
+            <path d="M 98 82 A 45 45 0 0 1 22 82"/>
+            <polygon points="22,82 30,88 22,95" fill="#1a7a4a" stroke="none"/>
+            <path d="M 22 38 A 45 45 0 0 1 55 15"/>
+            <polygon points="55,15 47,10 49,20" fill="#1a7a4a" stroke="none"/>
+        </g>
+        <circle cx="60" cy="60" r="30" fill="#ffffff" stroke="#e4e7ed" stroke-width="2"/>
+        <circle cx="60" cy="60" r="22" fill="#4ade80"/>
+        <circle cx="53" cy="63" r="6" fill="#ef4444"/>
+        <ellipse cx="68" cy="55" rx="7" ry="5" fill="#f59e0b" transform="rotate(-20 68 55)"/>
+        <circle cx="55" cy="52" r="4" fill="#fcd34d"/>
+      </svg>
+      <div class="sidebar-logo-text">Rescue<span>Eats</span></div>
+    </div>
+
+    <div class="sidebar-role" id="role-lbl"></div>
+    <nav class="sidebar-nav" id="nav"></nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="pg-title">Dashboard</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span style="font-size:16px;cursor:pointer" onclick="alert('You have 3 new notifications!')">🔔</span>
+        <div class="avatar" id="av" onclick="alert('Opening User Profile Settings...')"></div>
+      </div>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+
+<script>
+let role=null,tab='signin';
+const LISTINGS=[
+  {id:1,food:"Mixed Vegetable Curry",qty:"15 kg",cat:"Cooked Meals",expiry:"2h 30m",urg:"green",donor:"Royal Hotel",dist:"1.2 km",halal:true,allergens:"None"},
+  {id:2,food:"Assorted Bread Loaves",qty:"40 units",cat:"Bakery",expiry:"1h 10m",urg:"amber",donor:"French Bakery",dist:"2.5 km",halal:true,allergens:"Gluten"},
+  {id:3,food:"Fresh Orange Juice",qty:"20 litres",cat:"Beverages",expiry:"45 min",urg:"red",donor:"Grand Café",dist:"0.8 km",halal:true,allergens:"None"},
+  {id:4,food:"Rice with Chicken",qty:"25 portions",cat:"Cooked Meals",expiry:"3h 00m",urg:"green",donor:"Palace Restaurant",dist:"3.1 km",halal:true,allergens:"None"},
+  {id:5,food:"Fruit Salad Mix",qty:"8 kg",cat:"Fresh Produce",expiry:"1h 45m",urg:"amber",donor:"City Supermarket",dist:"1.9 km",halal:true,allergens:"None"},
+  {id:6,food:"Cheese Rolls",qty:"60 units",cat:"Bakery",expiry:"2h 15m",urg:"green",donor:"Sweet Corner",dist:"2.2 km",halal:false,allergens:"Dairy, Gluten"},
+];
+const TASKS=[
+  {id:1,food:"Mixed Vegetable Curry",pickup:"Royal Hotel, Abdoun",dropoff:"Al-Amal Food Bank, Jabal Amman",urg:"green",qty:"15 kg",est:"12 min"},
+  {id:2,food:"Assorted Bread Loaves",pickup:"French Bakery, Sweifieh",dropoff:"Hope Shelter, Zarqa",urg:"amber",qty:"40 units",est:"28 min"},
+  {id:3,food:"Fresh Orange Juice",pickup:"Grand Café, 3rd Circle",dropoff:"Rainbow Kitchen, Fuheis",urg:"red",qty:"20 litres",est:"18 min"},
+];
+const USERS=[
+  {id:1,name:"Royal Hotel Amman",role:"Donor",email:"food@royalhotel.jo",status:"active",joined:"Jan 12, 2026"},
+  {id:2,name:"Al-Amal Food Bank",role:"Recipient",email:"info@alamal.org",status:"active",joined:"Jan 15, 2026"},
+  {id:3,name:"Ahmad Khalil",role:"Driver",email:"ahmad@gmail.com",status:"active",joined:"Feb 2, 2026"},
+  {id:4,name:"Green Supermarket",role:"Donor",email:"ops@greensuper.jo",status:"pending",joined:"May 18, 2026"},
+  {id:5,name:"Hope Children Shelter",role:"Recipient",email:"help@hopeshelter.org",status:"pending",joined:"May 20, 2026"},
+];
+const MENUS={
+  donor:[["📊","Dashboard","donor-dash"],["➕","Post Food","post"],["📦","My Listings","listings"],["📈","Impact","impact"]],
+  recipient:[["🗺️","Donation Map","map"],["📋","Reservations","reservations"],["📦","Inventory","inventory"]],
+  driver:[["📋","Available Tasks","tasks"],["🏆","Badges","badges"]],
+  admin:[["📊","Overview","admin"],["👥","Users","users"],["📝","Audit Log","audit"]],
+};
+const ROLES={donor:"Food Donor",recipient:"Recipient Org.",driver:"Volunteer Driver",admin:"Administrator"};
+const TITLES={"donor-dash":"Donor Dashboard",post:"Post Surplus Food",listings:"My Listings",impact:"Impact Report",map:"Available Donations",reservations:"My Reservations",inventory:"Food Inventory",tasks:"Available Tasks",badges:"Badges & Leaderboard",admin:"Platform Overview",users:"User Management",audit:"Audit Log"};
+const INI={donor:"DH",recipient:"RA",driver:"VD",admin:"AD"};
+
+const urg=u=>{const m={green:["🟢","tag-green","Fresh"],amber:["🟡","tag-amber","Expiring"],red:["🔴","tag-red","Urgent"]};const[i,c,l]=m[u]||m.green;return`<span class="tag ${c}">${i} ${l}</span>`};
+const stag=s=>{const m={active:"tag-green Active",pending:"tag-amber Pending",suspended:"tag-red Suspended",open:"tag-red Open",resolved:"tag-green Resolved"};const p=(m[s]||"tag-gray "+s).split(" ");return`<span class="tag ${p[0]}">${p.slice(1).join(" ")}</span>`};
+
+function switchTab(t){
+  tab=t;
+  document.querySelectorAll('.login-tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='signin')||(i===1&&t==='register')));
+  document.getElementById('reg-extra').classList.toggle('hidden',t==='signin');
+  document.getElementById('forgot').classList.toggle('hidden',t==='register');
+  document.getElementById('signin-ex').classList.toggle('hidden',t==='register');
+  document.getElementById('main-btn').textContent=t==='signin'?'Sign In →':'Create Account →';
+}
+let regRole='donor';
+function selRole(btn,r){regRole=r;document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');}
+function doLogin(){
+  if(tab === 'register') alert('Account created successfully! Logging you in...');
+  loginAs(role||'donor');
+}
+function loginAs(r){
+  role=r;
+  document.getElementById('login-page').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('role-lbl').textContent=ROLES[r];
+  document.getElementById('av').textContent=INI[r];
+  const nav=document.getElementById('nav');
+  nav.innerHTML=(MENUS[r]||[]).map(([i,l,k])=>`<button class="nav-item" data-p="${k}" onclick="go('${k}')">${i} ${l}</button>`).join('');
+  const d={donor:'donor-dash',recipient:'map',driver:'tasks',admin:'admin'};
+  go(d[r]);
+}
+function logout(){role=null;document.getElementById('app').classList.add('hidden');document.getElementById('login-page').classList.remove('hidden');}
+function go(p){
+  document.getElementById('pg-title').textContent=TITLES[p]||p;
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
+  document.getElementById('content').innerHTML=pages[p]?pages[p]():'<div class="page"><div class="card">Coming soon.</div></div>';
+}
+
+const pages={
+'donor-dash':()=>`<div class="page">
+<div class="alert alert-green">🎉 Your last donation provided <strong>47 meals</strong> to Al-Amal Food Bank!</div>
+<div class="stats-grid">
+${[["🍽️","127","Total Listings","+8 this month"],["✅","98","Delivered","+6 this week"],["🌿","2,340 kg","Food Rescued","All time"],["🌍","4.2t","CO₂ Saved","Est. total"]].map(([i,v,l,d])=>`<div class="stat-card"><div class="stat-icon">${i}</div><div class="stat-val">${v}</div><div class="stat-label">${l}</div><div class="stat-delta">↑ ${d}</div></div>`).join('')}
+</div>
+<div class="card-row">
+<div class="card"><div class="card-title">Active Listings</div>
+${LISTINGS.slice(0,3).map(l=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--gray-100)"><div><div style="font-weight:600;font-size:13px">${l.food}</div><div style="font-size:11px;color:var(--gray-600)">${l.qty} · ${l.cat}</div></div>${urg(l.urg)}</div>`).join('')}
+</div>
+<div class="card"><div class="card-title">Monthly Impact</div>
+${[["Meals Provided","1,240",82],["Food Rescued","340 kg",68],["CO₂ Saved","612 kg",55]].map(([k,v,p])=>`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--gray-600)">${k}</span><strong>${v}</strong></div><div class="progress"><div class="progress-bar" style="width:${p}%"></div></div></div>`).join('')}
+</div></div></div>`,
+
+'post':()=>`<div class="page"><div class="card">
+<div class="card-title">Post Surplus Food</div>
+<div class="form-grid">
+<div class="form-group"><label class="form-label">Food Name *</label><input class="form-input" placeholder="e.g. Mixed Vegetable Curry"/></div>
+<div class="form-group"><label class="form-label">Category *</label><select class="form-select">${["Cooked Meals","Bakery","Fresh Produce","Beverages","Dairy","Other"].map(c=>`<option>${c}</option>`).join('')}</select></div>
+<div class="form-group"><label class="form-label">Quantity *</label><input class="form-input" placeholder="e.g. 15"/></div>
+<div class="form-group"><label class="form-label">Unit *</label><select class="form-select"><option>kg</option><option>portions</option><option>litres</option><option>units</option></select></div>
+<div class="form-group"><label class="form-label">Expiry Date *</label><input class="form-input" type="date"/></div>
+<div class="form-group"><label class="form-label">Expiry Time *</label><input class="form-input" type="time"/></div>
+</div>
+<div class="form-group"><label class="form-label">Pickup Address *</label><input class="form-input" placeholder="Full address"/></div>
+<div class="form-group"><label class="form-label">Food Photo</label><div onclick="alert('File Explorer Opened: Select an image to upload.')" style="border:2px dashed var(--gray-200);border-radius:var(--radius-sm);padding:20px;text-align:center;cursor:pointer;color:var(--gray-400);font-size:13px">📷 Click to upload photo</div></div>
+<div style="background:var(--amber-lt);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px">
+<div style="font-weight:700;color:var(--amber);margin-bottom:10px">⚠️ Food Safety (Required)</div>
+<div class="form-grid">
+<div class="form-group"><label class="form-label">Allergens *</label><input class="form-input" placeholder="e.g. Gluten, Dairy (or None)"/></div>
+<div class="form-group"><label class="form-label">Halal Status *</label><select class="form-select"><option>Halal Certified</option><option>Not Certified</option><option>Unknown</option></select></div>
+<div class="form-group"><label class="form-label">Storage Temperature *</label><input class="form-input" placeholder="e.g. Below 5°C"/></div>
+<div class="form-group"><label class="form-label">Max Travel Time (min) *</label><input class="form-input" type="number" placeholder="e.g. 90"/></div>
+</div></div>
+<div style="display:flex;gap:10px"><button class="btn btn-primary" onclick="postSuccess()">🚀 Submit Listing</button><button class="btn btn-secondary" onclick="alert('Draft Saved Successfully!')">Save Draft</button></div>
+</div></div>`,
+
+'listings':()=>`<div class="page">
+<div style="display:flex;justify-content:flex-end;margin-bottom:16px"><button class="btn btn-primary" onclick="go('post')">➕ Post New Listing</button></div>
+<div class="card" style="padding:0;overflow:hidden"><table class="table">
+<thead><tr><th>Food Item</th><th>Qty</th><th>Category</th><th>Expiry</th><th>Urgency</th><th>Actions</th></tr></thead>
+<tbody>${LISTINGS.map(l=>`<tr><td><div style="font-weight:600">${l.food}</div><div style="font-size:11px;color:var(--gray-600)">${l.donor}</div></td><td>${l.qty}</td><td><span class="tag tag-blue">${l.cat}</span></td><td style="font-weight:600">${l.expiry}</td><td>${urg(l.urg)}</td><td><button class="btn btn-danger btn-sm" onclick="if(confirm('Are you sure you want to cancel this listing?')) this.closest('tr').style.display='none';">Cancel</button></td></tr>`).join('')}</tbody>
+</table></div></div>`,
+
+'impact':()=>`<div class="page">
+<div class="stats-grid">${[["🍽️","2,340 kg","Food Rescued"],["🌍","4,212 kg","CO₂ Prevented"],["💧","9.4M L","Water Saved"],["👥","11,700","Meals Served"]].map(([i,v,l])=>`<div class="stat-card" style="background:linear-gradient(135deg,var(--green-lt),#dcfce7)"><div class="stat-icon">${i}</div><div class="stat-val">${v}</div><div class="stat-label">${l}</div></div>`).join('')}</div>
+<div class="card"><div class="card-title">Recent Donation Receipts</div>
+<table class="table"><thead><tr><th>Date</th><th>Food</th><th>Recipient</th><th>Meals</th><th>CO₂</th><th>Receipt</th></tr></thead>
+<tbody>${[["May 22","Vegetable Curry","Al-Amal Food Bank","47","8.4 kg"],["May 20","Bread Loaves","Hope Shelter","63","5.1 kg"],["May 18","Rice & Chicken","Rainbow Kitchen","112","20.2 kg"]].map(([d,f,r,m,c])=>`<tr><td>${d}</td><td style="font-weight:600">${f}</td><td>${r}</td><td><span class="tag tag-green">${m} meals</span></td><td>${c}</td><td><button class="btn btn-secondary btn-sm" onclick="alert('Downloading Receipt as PDF...')">📄 Download</button></td></tr>`).join('')}</tbody>
+</table></div></div>`,
+
+'map':()=>`<div class="page">
+<div class="map-box"><div style="font-size:40px">🗺️</div><div style="font-weight:700;font-size:15px">Interactive Donation Map</div><div style="font-size:12px;opacity:.8">Google Maps API — Colour-coded by urgency</div></div>
+<div style="display:flex;gap:8px;margin-bottom:14px"><button class="btn btn-primary btn-sm" onclick="alert('Showing All Items')">All</button><button class="btn btn-secondary btn-sm" onclick="alert('Filtering by Fresh items...')">🟢 Fresh</button><button class="btn btn-secondary btn-sm" onclick="alert('Filtering by Expiring items...')">🟡 Expiring</button><button class="btn btn-secondary btn-sm" onclick="alert('Filtering by Urgent items...')">🔴 Urgent</button></div>
+<div class="food-grid">${LISTINGS.map(l=>`<div class="food-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-weight:700;font-size:13px">${l.food}</div><div style="font-size:11px;color:var(--gray-600)">${l.donor} · ${l.dist}</div></div>${urg(l.urg)}</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px"><span class="tag tag-blue">${l.cat}</span>${l.halal?'<span class="tag tag-green">✅ Halal</span>':''}${l.allergens!='None'?`<span class="tag tag-amber">⚠️ ${l.allergens}</span>`:''}</div><div style="font-size:12px;color:var(--gray-600);margin-bottom:10px"><strong>${l.qty}</strong> · Expires <strong style="color:var(--red)">${l.expiry}</strong></div><button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" onclick="this.textContent='✅ Reserved'; this.classList.remove('btn-primary'); this.classList.add('btn-secondary'); alert('Food reserved! The donor has been notified.');">Reserve</button></div>`).join('')}</div></div>`,
+
+'reservations':()=>`<div class="page"><div class="card" style="padding:0;overflow:hidden"><table class="table">
+<thead><tr><th>Food Item</th><th>Donor</th><th>Reserved At</th><th>Status</th><th>Actions</th></tr></thead>
+<tbody>${[["Mixed Vegetable Curry","Royal Hotel","Today, 10:30 AM","🚗 In Transit"],["Assorted Bread Loaves","French Bakery","Today, 09:15 AM","⏳ Awaiting Driver"],["Fresh Orange Juice","Grand Café","Yesterday, 7:00 PM","✅ Delivered"]].map(([f,d,t,n])=>`<tr><td style="font-weight:600">${f}</td><td>${d}</td><td style="font-size:12px">${t}</td><td style="font-size:12px">${n}</td><td><button class="btn btn-danger btn-sm" onclick="if(confirm('Cancel this reservation?')) this.closest('tr').style.display='none';">Cancel</button></td></tr>`).join('')}</tbody>
+</table></div></div>`,
+
+'inventory':()=>`<div class="page"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+${[["🟢 Available",LISTINGS.slice(0,2)],["🟡 Reserved",LISTINGS.slice(2,4)],["🚗 In Transit",LISTINGS.slice(4,5)]].map(([t,items])=>`<div class="card"><div class="card-title">${t} <span class="tag tag-gray">${items.length}</span></div>${items.map(l=>`<div class="food-card" style="margin-bottom:8px"><div style="font-weight:600;font-size:13px;margin-bottom:3px">${l.food}</div><div style="font-size:11px;color:var(--gray-600)">${l.qty} · Expires ${l.expiry}</div></div>`).join('')}</div>`).join('')}
+</div></div>`,
+
+'tasks':()=>`<div class="page">
+<div class="alert alert-amber">⚡ ${TASKS.length} delivery tasks available near you</div>
+${TASKS.map(t=>`<div class="task-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div style="font-weight:700;font-size:14px">${t.food}</div>${urg(t.urg)}</div><div style="font-size:12px;color:var(--gray-600);margin-bottom:4px">📍 ${t.pickup}</div><div style="font-size:12px;color:var(--gray-600);margin-bottom:12px">📍 ${t.dropoff}</div><div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;gap:8px"><span class="tag tag-blue">📦 ${t.qty}</span><span class="tag tag-gray">🕐 ${t.est}</span></div><button class="btn btn-primary btn-sm" onclick="claimTask(${t.id})">Claim →</button></div></div>`).join('')}
+</div>`,
+
+'badges':()=>`<div class="page"><div class="card-row">
+<div class="card"><div class="card-title">Your Badges</div>
+${[["🥇","First Delivery","Completed your first delivery"],["🔥","On Fire","5 deliveries in one week"],["⚡","Speed Runner","Delivered in under 20 min"]].map(([i,t,d])=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gray-100)"><div style="font-size:28px">${i}</div><div><div style="font-weight:700;font-size:13px">${t}</div><div style="font-size:11px;color:var(--gray-600)">${d}</div></div></div>`).join('')}
+<div style="margin-top:12px;padding:14px;background:var(--gray-50);border-radius:var(--radius-sm);text-align:center"><div style="font-size:12px;color:var(--gray-600);margin-bottom:3px">Your Total Deliveries</div><div style="font-family:var(--font-head);font-size:34px;font-weight:900;color:var(--green)">31</div></div></div>
+<div class="card"><div class="card-title">🏆 Leaderboard — May 2026</div>
+${[["Haitham Gogazeh","142","gold"],["Bashar Amaireh","98","silver"],["Moath Omar Aabed","87","bronze"],["Yousef Alhourani","73",""],["Ahmad Arabiat","73",""],["You","31",""]].map(([n,d,c],i)=>`<div class="rank"><div class="rank-num ${c}">${i+1}</div><div style="flex:1;font-weight:600;font-size:13px${n==='You'?';color:var(--green)':''}">${n==='You'?'You 🎯':n}</div><span class="tag tag-blue">${d} deliveries</span></div>`).join('')}
+</div></div></div>`,
+
+'admin':()=>`<div class="page">
+<div class="stats-grid">${[["👥","1,284","Registered Users"],["📦","47","Active Listings"],["🚗","12","Live Deliveries"],["🚨","2","Open Incidents"]].map(([i,v,l])=>`<div class="stat-card"><div class="stat-icon">${i}</div><div class="stat-val">${v}</div><div class="stat-label">${l}</div></div>`).join('')}</div>
+<div class="card-row">
+<div class="card"><div class="card-title">⏳ Pending Approvals</div>
+${USERS.filter(u=>u.status==='pending').map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--gray-100)"><div><div style="font-weight:600;font-size:13px">${u.name}</div><div style="font-size:11px;color:var(--gray-600)">${u.role} · ${u.email}</div></div><div style="display:flex;gap:6px"><button class="btn btn-primary btn-sm" onclick="this.closest('div').parentElement.style.display='none'; alert('Organization Approved Successfully!');">✅ Approve</button><button class="btn btn-danger btn-sm" onclick="this.closest('div').parentElement.style.display='none'; alert('Request Rejected.');">❌ Reject</button></div></div>`).join('')}</div>
+<div class="card"><div class="card-title">🚨 Incidents</div>
+${[["Travel Time Exceeded","Bread → Hope Shelter","Today, 02:14 AM","open"],["QR Mismatch","Juice → Rainbow Kitchen","Yesterday","resolved"]].map(([t,task,time,s])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--gray-100)"><div><div style="font-weight:600;font-size:13px">${t}</div><div style="font-size:11px;color:var(--gray-600)">${task} · ${time}</div></div>${stag(s)}</div>`).join('')}
+</div></div></div>`,
+
+'users':()=>`<div class="page"><div class="card" style="padding:0;overflow:hidden">
+<div style="padding:14px 18px;border-bottom:1px solid var(--gray-100);display:flex;gap:8px"><input class="form-input" placeholder="🔍 Search users..." style="max-width:240px"/><select class="form-select" style="width:auto"><option>All Roles</option><option>Donor</option><option>Recipient</option><option>Driver</option></select></div>
+<table class="table"><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+<tbody>${USERS.map(u=>`<tr><td style="font-weight:600">${u.name}</td><td><span class="tag tag-blue">${u.role}</span></td><td style="font-size:12px;color:var(--gray-600)">${u.email}</td><td>${stag(u.status)}</td><td style="font-size:12px">${u.joined}</td><td><div style="display:flex;gap:5px">${u.status==='pending'?'<button class="btn btn-primary btn-sm" onclick="this.parentElement.parentElement.parentElement.style.display=\'none\'; alert(\'User Approved\');">Approve</button>':''}<button class="btn btn-danger btn-sm" onclick="alert('User account has been suspended.');">Suspend</button></div></td></tr>`).join('')}</tbody>
+</table></div></div>`,
+
+'audit':()=>`<div class="page">
+<div style="display:flex;gap:8px;margin-bottom:18px"><input class="form-input" type="date" style="width:auto"/><input class="form-input" type="date" style="width:auto"/><button class="btn btn-primary" onclick="alert('Generating Filtered Audit Log...')">Generate</button><button class="btn btn-secondary" onclick="alert('Downloading Data as CSV...')">📥 CSV</button><button class="btn btn-secondary" onclick="alert('Downloading Data as PDF...')">📄 PDF</button></div>
+<div class="card" style="padding:0;overflow:hidden"><table class="table">
+<thead><tr><th>Timestamp</th><th>Event</th><th>Actor</th><th>Entity</th><th>Details</th></tr></thead>
+<tbody>${[{t:"2026-05-26 14:32",e:"listing_created",a:"Royal Hotel",en:"Listing #127",d:"Vegetable Curry, 15 kg"},{t:"2026-05-26 13:15",e:"reservation_made",a:"Al-Amal Food Bank",en:"Listing #127",d:"Reserved"},{t:"2026-05-26 13:45",e:"qr_scan_pickup",a:"Ahmad Khalil",en:"Task #98",d:"Pickup confirmed"},{t:"2026-05-26 14:10",e:"delivery_completed",a:"Ahmad Khalil",en:"Task #98",d:"Travel: 25 min"},{t:"2026-05-26 14:11",e:"incident_flagged",a:"System",en:"Task #97",d:"Travel time exceeded"}].map(l=>{const c={listing_created:"green",reservation_made:"blue",qr_scan_pickup:"amber",delivery_completed:"green",incident_flagged:"red"};return`<tr><td style="font-size:11px;font-family:monospace;color:var(--gray-600)">${l.t}</td><td><span class="tag tag-${c[l.e]||'gray'}">${l.e.replace(/_/g,' ')}</span></td><td style="font-weight:600;font-size:13px">${l.a}</td><td style="font-size:12px;color:var(--gray-600)">${l.en}</td><td style="font-size:12px">${l.d}</td></tr>`}).join('')}</tbody>
+</table></div></div>`,
+};
+
+function postSuccess(){document.getElementById('content').innerHTML=`<div class="page"><div class="card" style="text-align:center;padding:48px"><div style="font-size:52px;margin-bottom:14px">✅</div><div class="card-title" style="font-size:20px">Listing Posted Successfully!</div><p style="color:var(--gray-600);margin-bottom:22px">Notifications sent to 12 nearby recipients.</p><div style="display:flex;gap:10px;justify-content:center"><button class="btn btn-primary" onclick="go('post')">Post Another</button><button class="btn btn-secondary" onclick="go('listings')">View Listings</button></div></div></div>`;}
+
+function claimTask(id){const t=TASKS.find(x=>x.id===id);document.getElementById('content').innerHTML=`<div class="page"><div class="card" style="text-align:center;padding:36px"><div style="font-size:48px;margin-bottom:12px">🚗</div><div class="card-title" style="font-size:18px">Task Claimed!</div><p style="color:var(--gray-600);margin-bottom:18px">Navigate to pickup location</p><div class="alert alert-green" style="text-align:left"><strong>📍 Pickup:</strong> ${t.pickup}</div><div class="alert alert-amber" style="text-align:left"><strong>📍 Drop-off:</strong> ${t.dropoff}</div><div style="display:flex;gap:10px;justify-content:center;margin-top:14px"><button class="btn btn-primary" onclick="alert('Opening Google Maps for Navigation...')">🗺️ Open Navigation</button><button class="btn btn-secondary" onclick="go('tasks')">← Back to Tasks</button></div></div></div>`;}
+</script>
+</body>
+</html>
